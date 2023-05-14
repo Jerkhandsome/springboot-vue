@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>学生列表</title>
+		<script src="js/Vue.js"></script>
+		<script src="js/index.js"></script>
+		<script src="js/axios.js"></script>
+		<link rel="stylesheet" href="css/index.css">
+		<style>
+			.avatar-uploader .el-upload {
+				border: 1px dashed #d9d9d9;
+				border-radius: 6px;
+				cursor: pointer;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.avatar-uploader .el-upload:hover {
+				border-color: #409EFF;
+			}
+
+			.avatar-uploader-icon {
+				font-size: 28px;
+				color: #8c939d;
+				width: 178px;
+				height: 178px;
+				line-height: 178px;
+				text-align: center;
+			}
+
+			.avatar {
+				width: 178px;
+				height: 178px;
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="box">
+			<el-table :data="Students" stripe style="width: 100%">
+				<el-table-column prop="id" label="学号" width="180">
+				</el-table-column>
+				<el-table-column prop="name" label="姓名" width="180">
+				</el-table-column>
+				<el-table-column prop="gender" label="性别">
+				</el-table-column>
+				<el-table-column prop="image" label="图片">
+					<template slot-scope="scope">
+						<img :src="scope.row.imgUrl" alt="" width="90" height="90" />
+					</template>
+				</el-table-column>
+				<el-table-column label="操作">
+					<template slot-scope="scope">
+						<el-button size="mini" @click="edit(scope.row)">编辑
+						</el-button>
+						<el-button size="mini" type="danger" @click="Delete(scope.row)">删除
+						</el-button>
+					</template>
+				</el-table-column>
+				<el-table-column align="right">
+					<template slot="header" slot-scope="scope">
+						<el-input v-model="search" @keyup.enter.native="searchStudent" size="mini"
+							placeholder="输入关键字搜索">
+					</template>
+				</el-table-column>
+			</el-table>
+			<el-dialog title="学生信息" :visible.sync="dialogFormVisible">
+				<el-form :model="Student">
+					<el-form-item label="学号" :label-width="formLabelWidth">
+						<el-input v-model="Student.id" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="姓名" :label-width="formLabelWidth">
+						<el-input v-model="Student.name" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="性别" :label-width="formLabelWidth">
+						<el-input v-model="Student.gender" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="图片" :label-width="formLabelWidth">
+						<el-upload class="avatar-uploader" action="/file" :show-file-list="false"
+							:on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+							<img v-if="imageUrl" :src="imageUrl" class="avatar">
+							<i v-else class="el-icon-plus avatar-uploader-icon"></i>
+						</el-upload>
+					</el-form-item>
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="dialogFormVisible=false">取 消</el-button>
+					<el-button type="primary" @click="saveMessage()">确 定</el-button>
+				</div>
+			</el-dialog>
+		</div>
+	</body>
+	<script>
+		new Vue({
+			el: "#box",
+			data: {
+				Students: [],
+				dialogFormVisible: false,
+				Student: {},
+				uploadurl: '',
+				imageUrl: '',
+				formLabelWidth: '120px',
+				search:'',
+				id:'',
+                message:''
+			},
+			methods: {
+				handleAvatarSuccess(res) {
+					this.imageUrl = res.imgUrl;
+					console.log(this.imgUrl);
+					this.$message.success("图片上传成功");
+					return (this.Student.imgUrl = res.imgUrl);
+				},
+				beforeAvatarUpload(file) {
+					const isJPG = file.type === 'image/jpeg';
+					const isLt2M = file.size / 1024 / 1024 < 2;
+					console.log(file)
+					// 使图片显示
+					this.imageUrl = URL.createObjectURL(file);
+					if (!isJPG) {
+						this.$message.error('上传头像图片只能是 JPG 格式!');
+					}
+					if (!isLt2M) {
+						this.$message.error('上传头像图片大小不能超过 2MB!');
+					}
+					return isJPG && isLt2M;
+				},
+
+				edit:function(Student){
+					this.Student=Student;
+					this.dialogFormVisible=true;
+				},
+				searchStudent:function(){
+					var search = this.search;
+					var that = this;
+					console.log(this.Students)
+					axios.get("getStudent/"+search).then(function (res){
+						that.Students = res.data.list;
+
+					});
+
+				},
+				Delete:function(student){
+					var id = student.id;
+				    var that = this;
+					axios.delete("deleteByName/"+id).then(function (res){
+					    that.message = res.data.Message;
+						location.href = "search";
+					    console.log(that.message)
+					})
+				},
+				saveMessage:function(){
+					var Student = this.Student;
+					var StudentJson = JSON.stringify(Student);
+					//前端发送复杂类型数据，需要借助js原生对象FormData进行数据传输
+					//复杂类型: 对象转json、数组转json、文件
+					var formData = new FormData();
+					formData.append("StudentJson",StudentJson);
+					let option = {
+						url:"updateById",
+						method:"Put",
+						data:formData
+					}
+					var that = this;
+					axios(option).then(function (res){
+					    that.message = res.data.Message;
+                    })
+
+				},
+				SelectAllStudents:function(){
+					var that = this;
+					axios.get("findAllStudents").then(function (res){
+						that.Students=res.data.list;
+					});
+				},
+			},
+			mounted:function(){
+				this.SelectAllStudents();
+			}
+		})
+	</script>
+</html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="kang.demo.demo.mapper.StudentMapper">
+    <resultMap id="BaseResult" type="kang.demo.demo.pojo.Student">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="gender" jdbcType="VARCHAR" property="gender"/>
+        <result column="image" jdbcType="VARCHAR"  property="imgUrl"/>
+    </resultMap>
+
+    <select id="findAllStudent" resultMap="BaseResult">
+      Select * from sdlist
+    </select>
+
+    <select id="findByName" resultMap="BaseResult">
+      Select * from sdlist where name like  concat( '%' , #{name}, '%')
+    </select>
+
+    <insert id="insertStudent" parameterType="kang.demo.demo.pojo.Student">
+        insert into sdlist values (#{id},#{name},#{gender},#{imgUrl})
+    </insert>
+
+    <delete id="deleteById" parameterType="kang.demo.demo.pojo.Student">
+        delete from sdlist where id = #{id}
+    </delete>
+
+    <update id="updateById" parameterType="kang.demo.demo.pojo.Student">
+        update into sdlist set  name=#{name} , gender=#{gender} ,imgUrl=#{imgUrl} where id = {id}
+    </update>
+
+</mapper>

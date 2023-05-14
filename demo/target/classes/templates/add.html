@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>学生列表</title>
+    <script src="js/Vue.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/axios.js"></script>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<style>
+    .avatar-uploader .el-upload {
+        border: 1px dashed #d9d9d9;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .avatar-uploader .el-upload:hover {
+        border-color: #409EFF;
+    }
+
+    .avatar-uploader-icon {
+        font-size: 28px;
+        color: #8c939d;
+        width: 178px;
+        height: 178px;
+        line-height: 178px;
+        text-align: center;
+    }
+
+    .avatar {
+        width: 178px;
+        height: 178px;
+        display: block;
+    }
+</style>
+<body>
+<div id="box">
+    <el-form :model="Student">
+        <el-form-item label="学号" :label-width="formLabelWidth">
+            <el-input v-model="Student.id" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="姓名" :label-width="formLabelWidth">
+            <el-input v-model="Student.name" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="性别" :label-width="formLabelWidth">
+            <el-input v-model="Student.gender" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-upload
+                action="/file"
+                :on-success="handle_success"
+        >
+            <!-- 再次提醒，:on-success="函数名"，函数名后面不要跟括号 -->
+            <el-button size="small" type="primary">点击上传</el-button>
+
+            <div slot="tip" class="el-upload__tip">
+                只能上传jpg/png文件，且不超过500kb
+            </div>
+        </el-upload>
+        <el-form-item>
+            <el-button type="primary" @click="handleSave()">确定</el-button>
+        </el-form-item>
+
+    </el-form>
+</div>
+</body>
+<script>
+    new Vue({
+        el: "#box",
+        data: {
+            Students: [],
+            imgUrl:'',
+            Student:{
+                id:"",
+                name:"",
+                gender:"",
+                imgUrl:""
+            },
+            formLabelWidth:'120px'
+        },
+        methods: {
+            handleSave: function () {
+                var Student = this.Student;
+                var StudentJson = JSON.stringify(Student);
+                //前端发送复杂类型数据，需要借助js原生对象FormData进行数据传输
+                //复杂类型: 对象转json、数组转json、文件
+                var formData = new FormData();
+                formData.append("StudentJson",StudentJson);
+                let option = {
+                    url:"addStudent",
+                    method:"post",
+                    data:formData
+                }
+                console.log(this.Student);
+                var that = this;
+                axios(option).then(function (res){
+                    console.log(that.Student);
+                    console.log(res.data.Message)
+                })
+            },
+            handle_success(res) {
+                console.log(res);
+                this.$message.success("图片上传成功");
+                return (this.Student.imgUrl = res.imgUrl);
+            },
+
+        },
+
+    })
+</script>
+</html>
